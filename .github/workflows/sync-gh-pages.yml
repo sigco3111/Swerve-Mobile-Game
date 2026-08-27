@@ -1,0 +1,37 @@
+# Sync main → gh-pages so GitHub Pages picks up changes on every push.
+# The repo's deployment branch is gh-pages (not main) and there is no built-in
+# sync, so this workflow force-pushes main's current HEAD into gh-pages after
+# every push to main. GitHub's own "pages build and deployment" workflow runs
+# downstream once the branch is updated.
+#
+# Concurrency group keeps a second push from racing the in-flight deploy; new
+# pushes wait for the current job so we don't leave gh-pages in a torn state.
+
+name: Sync main to gh-pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Force-push main to gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push --force origin HEAD:gh-pages
