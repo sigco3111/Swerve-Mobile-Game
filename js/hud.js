@@ -6,6 +6,8 @@ let gameContainer, hitFlashEl;
 let comboEl, comboCountEl, comboMultEl;
 let powerupSlots = {};   // kind -> { slot, ringFg, lastOffset }
 let achievementToast, achievementToastName, achievementsSummaryEl;
+let achievementsListEl;
+let achievementRows = {};   // id -> DOM element
 let pauseBtn, pauseOverlay;
 let toastHideTimer = null;
 
@@ -53,6 +55,7 @@ export function initHUD() {
 
     pauseBtn = document.getElementById('pause-btn');
     pauseOverlay = document.getElementById('pause-overlay');
+    achievementsListEl = document.getElementById('achievements-list');
 }
 
 export function updateScore(score) {
@@ -309,4 +312,47 @@ export function applyColorblind(on) {
     if (gameContainer) {
         gameContainer.classList.toggle('colorblind', on);
     }
+}
+
+// Achievements gallery — built once from the snapshot, individual rows
+// flipped to "unlocked" as the player earns them. Re-rendering the whole
+// list on every unlock would churn the DOM; class toggle is enough.
+export function initAchievementsList(achievements) {
+    if (!achievementsListEl) return;
+    achievementRows = {};
+    achievementsListEl.innerHTML = '';
+    for (const a of achievements) {
+        const row = document.createElement('div');
+        row.className = 'achievement-row ' + (a.unlocked ? 'unlocked' : 'locked');
+        row.dataset.achievementId = a.id;
+
+        const icon = document.createElement('span');
+        icon.className = 'achievement-icon';
+        icon.textContent = a.unlocked ? '★' : '☆';
+
+        const text = document.createElement('div');
+        text.className = 'achievement-text';
+        const name = document.createElement('div');
+        name.className = 'achievement-name';
+        name.textContent = a.name;
+        const desc = document.createElement('div');
+        desc.className = 'achievement-desc';
+        desc.textContent = a.desc;
+        text.appendChild(name);
+        text.appendChild(desc);
+
+        row.appendChild(icon);
+        row.appendChild(text);
+        achievementsListEl.appendChild(row);
+        achievementRows[a.id] = { row, icon };
+    }
+}
+
+export function markAchievementUnlocked(id) {
+    const entry = achievementRows[id];
+    if (!entry) return;
+    if (entry.row.classList.contains('unlocked')) return;
+    entry.row.classList.remove('locked');
+    entry.row.classList.add('unlocked');
+    entry.icon.textContent = '★';
 }

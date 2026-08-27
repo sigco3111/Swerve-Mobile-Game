@@ -116,3 +116,14 @@ export function resetAchievements() {
     unlocked.clear();
     save();
 }
+
+// Snapshot for the pause-overlay gallery. The caller already has the unlock
+// state in `unlocked`, so we just merge it onto the static definitions.
+export function getAchievementsList() {
+    return ACHIEVEMENTS.map(a => ({
+        id: a.id,
+        name: a.name,
+        desc: a.desc,
+        unlocked: unlocked.has(a.id)
+    }));
+}

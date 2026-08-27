@@ -8,13 +8,13 @@ import { initTrack, generateSegment, removeOldSegments, getSegments, getSegmentL
 import { initRails, updateRails, getRailMaterials } from './rails.js';
 import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles, getObstacleMaterials } from './obstacles.js';
 import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles, getCollectibleMaterials, pullCollectibles } from './collectibles.js';
-import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen, updateCombo, hideCombo, updatePowerup, showAchievementToast, hideAchievementToast, updateAchievementsSummary, showPauseButton, hidePauseButton, showPauseOverlay, hidePauseOverlay, getPauseButton, getPauseOverlay, initSettingsToggles, getSettingToggle, applyColorblind } from './hud.js';
+import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen, updateCombo, hideCombo, updatePowerup, showAchievementToast, hideAchievementToast, updateAchievementsSummary, showPauseButton, hidePauseButton, showPauseOverlay, hidePauseOverlay, getPauseButton, getPauseOverlay, initSettingsToggles, getSettingToggle, applyColorblind, initAchievementsList, markAchievementUnlocked } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox, setSkyLevel } from './skybox.js';
 import { createHexBackground, updateHexBackground, getHexMaterial } from './hexbg.js';
 import { createShootingStars, updateShootingStars, triggerShootingStars, resetShootingStars, getShootingStarMaterials } from './shootingstars.js';
 import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound, playComboTierSound, playMagnetSound, playShieldSound, playSlowMoSound, setSoundEnabled } from './audio.js';
-import { loadAchievements, checkAchievements, getUnlockedCount, getTotalCount } from './achievements.js';
+import { loadAchievements, checkAchievements, getUnlockedCount, getTotalCount, getAchievementsList } from './achievements.js';
 import { loadSettings, getSetting, setSetting, getAllSettings, haptic } from './settings.js';
 
 // Game states
@@ -102,7 +102,10 @@ function evaluateAchievements() {
     runStats.maxComboTier = Math.max(runStats.maxComboTier, comboTier);
     runStats.maxLevel = Math.max(runStats.maxLevel, getCurrentLevel());
     const unlocked = checkAchievements(runStats);
-    for (const a of unlocked) showAchievementToast(a.name);
+    for (const a of unlocked) {
+        showAchievementToast(a.name);
+        markAchievementUnlocked(a.id);
+    }
 }
 
 function resetRunStats() {
@@ -201,6 +204,7 @@ function init() {
     initHUD();
     initSettingsToggles(getAllSettings());
     applyColorblind(getSetting('colorblind'));
+    initAchievementsList(getAchievementsList());
 
     // Settings toggles — touchstart only with preventDefault so a tap doesn't
     // fire both touchstart and the synthetic click (which would double-toggle).
