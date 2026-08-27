@@ -46,7 +46,7 @@ export function updateScore(score) {
 }
 
 export function updateHighScore(highscore) {
-    highscoreEl.textContent = `hi: ${highscore}`;
+    highscoreEl.textContent = `최고: ${highscore}`;
 }
 
 export function updateLives(lives) {
@@ -84,7 +84,7 @@ export function hideGhostIndicator() {
 }
 
 export function showLevelUp(level) {
-    levelUpTextEl.innerHTML = `level<br>${level}`;
+    levelUpTextEl.innerHTML = `레벨<br>${level}`;
     levelUpEl.classList.remove('hidden');
 
     // Re-trigger animation
@@ -107,7 +107,7 @@ export function hideHUD() {
 
 export function showTitleScreen(highscore) {
     titleScreen.classList.remove('hidden');
-    titleHighscore.textContent = `high score: ${highscore}`;
+    titleHighscore.textContent = `최고 기록: ${highscore}`;
 }
 
 export function hideTitleScreen() {
@@ -117,7 +117,7 @@ export function hideTitleScreen() {
 export function showGameOver(score, highscore) {
     gameOverScreen.classList.remove('hidden');
     finalScore.textContent = score;
-    finalHighscore.textContent = `best: ${highscore}`;
+    finalHighscore.textContent = `최고: ${highscore}`;
 }
 
 export function hideGameOver() {

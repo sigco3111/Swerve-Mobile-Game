@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Swerve</title>
+    <title>스월브 - 모바일 3D 러닝 게임</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
                 <span class="life-icon active" id="life-3"></span>
             </div>
             <div id="ghost-indicator" class="hidden">
-                <span id="ghost-text">ghost</span>
+                <span id="ghost-text">무적</span>
                 <svg id="ghost-ring" viewBox="0 0 36 36">
                     <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
                     <circle id="ghost-timer-ring" cx="18" cy="18" r="16" fill="none" stroke="#00ffff" stroke-width="2"
@@ -32,36 +32,36 @@
             <div id="score-display">0</div>
         </div>
         <div id="hud-right">
-            <div id="highscore-display">HI: 0</div>
+            <div id="highscore-display">최고: 0</div>
         </div>
     </div>
 
     <!-- Level Up Notification -->
     <div id="level-up" class="hidden">
-        <span id="level-up-text">level 1</span>
+        <span id="level-up-text">레벨 1</span>
     </div>
 
     <!-- Title Screen -->
     <div id="title-screen">
-        <h1 id="game-title">swerve</h1>
-        <div id="title-highscore">high score: 0</div>
-        <div id="tap-to-start">touch to start</div>
+        <h1 id="game-title">스월브</h1>
+        <div id="title-highscore">최고 기록: 0</div>
+        <div id="tap-to-start">터치하여 시작</div>
     </div>
 
     <!-- Game Over Screen -->
     <div id="game-over-screen" class="hidden">
-        <h2 id="game-over-title">game over</h2>
-        <div id="final-score-label">score</div>
+        <h2 id="game-over-title">게임 오버</h2>
+        <div id="final-score-label">점수</div>
         <div id="final-score">0</div>
-        <div id="final-highscore">best: 0</div>
-        <div id="restart-btn">touch to restart</div>
+        <div id="final-highscore">최고: 0</div>
+        <div id="restart-btn">터치하여 다시 시작</div>
     </div>
 
     <!-- Tutorial Overlay -->
     <div id="tutorial-overlay">
         <div id="tutorial-text">
-            touch &amp; hold to control the marble<br>
-            swipe left and right to dodge
+            마블을 터치한 채 움직여 조작<br>
+            좌우로 스와이프하여 회피
         </div>
     </div>
 

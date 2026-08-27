@@ -1,135 +1,154 @@
-# 🔮 Swerve
-> A 3D ball-rolling endless runner built with Three.js & Cannon-es. (MOBILE WEB: iOS & Android)
->
-> **(STILL IN PROGRESS)** ⚠️ This build is under active development. Expect unresolved bugs, visual glitches, and unfinished features. Things will break.
+# 🔮 스월브 (Swerve)
 
-[**➡️ PLAY THE GAME HERE**](https://danielchavez-w.github.io/Swerve-Mobile-Game/)
+> **Three.js & Cannon-es로 만든 3D 마블 굴림 무한 러너 게임 — 모바일 웹(iOS & Android) 지원**
+
+> ⚠️ **아직 개발 중입니다.** 이 빌드는 활발하게 작업되고 있어요. 버그, 시각적 글리치, 미완성 기능이 있을 수 있습니다. 가끔 깨질 수 있어요.
+
+[**➡️ 게임 플레이하기**](https://sigco3111.github.io/Swerve-Mobile-Game/)
 
 ---
 
-### 📱 Controls
+## 📱 조작법
 
-| Action | Input |
+| 동작 | 입력 |
 | :--- | :--- |
-| **Steer the Marble** | Touch & hold, drag left/right |
+| **마블 조작** | 화면을 터치한 채 좌우로 드래그 |
 
-> The marble always rolls forward automatically. Your finger guides it left and right.
+> 마블은 항상 자동으로 앞으로 굴러갑니다. 손가락이 좌우 방향을 결정합니다.
 
-### 🎮 Game
+---
 
-**Objective:** Guide your marble down an endless neon track, collect points, dodge barriers, and survive as long as you can.
+## 🎮 게임 소개
 
-* **🏆 Goal:** Rack up the highest score possible. There is no finish line — only your limits.
-* **💀 Game Over:** You have **3 lives**. Hit a barrier and you lose one. Lose all three and it's over. No continues. Tap to restart.
+**목표:** 끝없이 이어지는 네온 트랙 위에서 마블을 굴리면서 포인트를 모으고, 장애물을 피하고, 최대한 오래 살아남으세요.
 
-### 💎 Collectibles
+* **🏆 목표:** 가능한 한 높은 점수를 기록하세요. 결승선은 없습니다 — 오직 당신의 한계만이 있을 뿐.
+* **💀 게임 오버:** **목숨은 3개**입니다. 장애물에 부딪히면 하나를 잃습니다. 세 개를 모두 잃으면 끝. 이어하기 없음. 화면을 터치해서 다시 시작하세요.
 
-The track is loaded with pickups. Grab everything you can.
+---
 
-1. **Point Dots (10 pts):** Small neon blue spheres scattered along the track in lines and wave patterns. The bread and butter of your score.
-2. **Speed Boost (25 pts):** Green glowing cones that give a short burst of speed when collected. Appear starting at level 3.
-3. **Diamonds (50 pts):** Rotating golden gems placed at tricky spots. Risk meets reward.
-4. **Neon Arches (100 pts):** Glowing yellow arches standing on the track. Roll through the arch for big points.
+## 💎 수집 아이템
 
-### 🚧 Obstacles & Ghost Mode
+트랙에는 다양한 픽업이 가득합니다. 가능한 한 많이 주워보세요.
 
-Barriers appear along the track to test your reflexes:
+1. **점수 점 (10점)** — 파란 네온 작은 구슬. 트랙을 따라 일렬 또는 물결 패턴으로 흩어져 있어요. 점수의 기본입니다.
+2. **속도 부스트 (25점)** — 초록빛으로 빛나는 콘. 획득하면 짧은 시간 동안 속도가 빨라집니다. **레벨 3부터 등장**합니다.
+3. **다이아몬드 (50점)** — 황금색으로 회전하는 보석. 까다로운 위치에 놓여 있어요. 위험과 보상이 함께 옵니다.
+4. **네온 아치 (100점)** — 노란색으로 빛나는 아치. 트랙 위에 서 있어요. 아치 사이를 통과하면 큰 점수를 받습니다.
 
-* **Static Walls** — fixed blocks covering part of the track. Swerve around them.
-* **Swinging Arms** — pendulum beams sweeping side to side.
-* **Sliding Blocks** — barriers that slide back and forth across the track.
-* **Low Bars** — horizontal bars with a narrow gap to thread through.
+---
 
-**When you get hit:**
+## 🚧 장애물과 무적 모드
 
-* You lose 1 life.
-* The marble enters **Ghost Mode** for 3 seconds — it turns transparent and can phase through all barriers.
-* The marble slows down to 40% speed and gradually ramps back up. The slowdown lasts longer at higher levels.
-* You can still move and steer during Ghost Mode, but you **cannot collect points**.
-* After 3 seconds, the marble solidifies and you're vulnerable again.
+트랙에는 당신의 반응 속도를 시험할 장애물들이 등장합니다:
 
-### 📈 Difficulty Scaling
+* **정적 벽** — 트랙의 일부를 가로막는 고정 블록. 옆으로 빠져서 피하세요.
+* **회전 암** — 좌우로 흔들리는 진자형 빔.
+* **슬라이딩 블록** — 트랙을 가로질러 앞뒤로 미끄러지는 장애물.
+* **낮은 바** — 좁은 틈새로 통과해야 하는 수평 바.
 
-The game gets harder the better you play. As your score climbs, expect:
+**피격 시 동작:**
 
-* **Faster base speed** — the marble accelerates with each level.
-* **More barriers** — obstacles appear more frequently.
-* **Longer hit slowdowns** — recovery from hits takes longer at higher levels.
+* 목숨이 1개 줄어듭니다.
+* 마블이 **무적 모드**에 진입해 3초간 투명해지며 모든 장애물을 통과할 수 있습니다.
+* 마블 속도가 40%로 떨어졌다가 점진적으로 회복됩니다. 레벨이 높을수록 회복이 더 오래 걸립니다.
+* 무적 모드 중에도 이동과 조작은 가능하지만, **점수를 수집할 수는 없습니다**.
+* 3초 후 마블이 다시 단단해지고, 그때부터 다시 피격당할 수 있습니다.
 
-| Level | Name | Score | Speed | What Changes |
+---
+
+## 📈 난이도 스케일링
+
+점점이 높아질수록 게임은 더 어려워집니다. 예상할 수 있는 변화:
+
+* **기본 속도 증가** — 레벨이 올라갈수록 마블이 빨라집니다.
+* **장애물 빈도 증가** — 더 자주 등장합니다.
+* **피격 후 감속 시간 증가** — 높은 레벨일수록 회복이 더 오래 걸립니다.
+
+| 레벨 | 이름 | 점수 범위 | 속도 | 변화 |
 | :--- | :--- | :--- | :--- | :--- |
-| 1 | Easy | 0 – 499 | 1.0x | Slow speed, few obstacles, lots of pickups |
-| 2 | Medium | 500 – 1,499 | 1.15x | Speed increases, more obstacles |
-| 3 | Hard | 1,500 – 2,499 | 1.3x | Frequent barriers, speed boosts start appearing |
-| 4 | Very Hard | 2,500 – 3,999 | 1.55x | High speed, dense obstacles |
-| 5 | Extreme | 4,000 – 5,999 | 1.8x | Very fast, obstacles everywhere |
-| 6 | Insane | 6,000 – 7,999 | 2.1x | Relentless speed and obstacle density |
-| 7 | Nightmare | 8,000+ | 2.4x | Maximum speed. Good luck. |
+| 1 | 이지 | 0 – 499 | 1.0x | 느린 속도, 적은 장애물, 많은 픽업 |
+| 2 | 노멀 | 500 – 1,499 | 1.15x | 속도 증가, 장애물 증가 |
+| 3 | 하드 | 1,500 – 2,499 | 1.3x | 빈번한 장애물, 속도 부스트 등장 |
+| 4 | 아주 어려움 | 2,500 – 3,999 | 1.55x | 빠른 속도, 빽빽한 장애물 |
+| 5 | 극한 | 4,000 – 5,999 | 1.8x | 매우 빠름,到处都是 장애물 |
+| 6 | 미친듯이 | 6,000 – 7,999 | 2.1x | 끊임없는 속도와 장애물 밀도 |
+| 7 | 악몽 | 8,000+ | 2.4x | 최고 속도. 행운을 빕니다. |
 
-### 🌌 Setting
+---
 
-The entire game takes place under a **night sky with northern lights**. Stars twinkle overhead and aurora ribbons of green, cyan, and purple flow across the horizon. The track itself is a neon-lit corridor — glowing edge rails on a dark surface, cutting through the void.
+## 🌌 배경
 
-Every time you reach a new level, a burst of **colorful shooting stars** sweeps across the sky behind the level banner — each level in its own palette. The **nebula ribbons shift colour** as you climb the levels, and the star field runs three tiers deep, from bright pulsating stars down to a dim scatter.
+게임 전체는 **오로라가 빛나는 밤하늘** 아래에서 진행됩니다. 별이 머리 위에서 반짝이고, 초록, 청록, 보라색의 오로라 리본이 수평선을 가로질러 흐릅니다. 트랙 자체는 네온 빛이 들어오는 복도 — 어두운 바닥 위에 빛나는 가장자리 레일이 빈 공간을 가릅니다.
 
-### 📊 HUD & Scoring
+새 레벨에 도달할 때마다, **다채로운 별똥별**이 레벨 배너 뒤 하늘을 가로지르며 폭발합니다 — 각 레벨마다 고유한 색상 팔레트를 가집니다. **네뷸라 리본은 레벨이 올라가며 색이 바뀌고**, 별 하늘은 밝게 맥동하는 별부터 희미한 산개까지 세 단계의 깊이로 구성됩니다.
 
-| Position | Display |
+---
+
+## 📊 HUD와 점수
+
+| 위치 | 표시 |
 | :--- | :--- |
-| **Top Left** | Lives (marble icons) |
-| **Top Center** | Current Score |
-| **Top Right** | High Score (saved locally) |
+| **좌측 상단** | 목숨 (마블 아이콘) |
+| **중앙 상단** | 현재 점수 |
+| **우측 상단** | 최고 기록 (로컬 저장) |
 
 ---
 
-### 🛠 Developer Iteration Notes
+## 🛠 개발 노트
 
-> *"The original touch controls were force-based — you'd push the ball and it would drift. It felt floaty and imprecise, especially at higher speeds. Switching to 1:1 world-space tracking changed everything. Your finger is the ball. Wherever you drag, the marble follows instantly. That directness is what makes dodging at 2.4x speed feel possible instead of hopeless."*
+> *"원래 터치 컨트롤은 힘 기반이었습니다 — 마블을 밀면 천천히 미끄러지는 식이었죠. 특히 고속에서 둥둥 떠다니는 느낌이 들어서 부정확했습니다. 1:1 월드 공간 트래킹으로 전환하니 모든 게 바뀌었어요. 손가락이 곧 마블입니다. 어디로 드래그하든 마블이 즉시 따라옵니다. 그 직접성이 2.4x 속도에서의 회피를 불가능하지 않게 만드는 열쇠입니다."*
 
-> *"Ghost Mode originally let you keep collecting points while invulnerable. It felt broken — you'd get hit on purpose near a cluster of pickups and profit from it. Disabling collection during ghost mode turned it into a pure survival mechanic. Now getting hit always costs you something, even if you don't die."*
+> *"무적 모드 초안에서는 무적이면서도 점수를 계속 모을 수 있었습니다. 의도적으로 픽업 클러스터 근처에서 맞아서 이득을 보는 식으로 악용할 수 있었죠. 무적 모드 중 수집을 비활성화하니 순수한 생존 메커니즘이 되었습니다. 이제 맞는다는 것은 항상 뭔가를 잃는다는 의미가 되었어요 — 죽지 않더라도요."*
 
-> *"The speed boost collectible went through a few rounds of tuning. The first version was way too strong — it launched you forward and you'd slam into the next obstacle before you could react. We dialed it down to a 1.3x burst for half a second, just enough to feel the kick without losing control. Delaying it to level 3 also helped — by the time it shows up, the player already knows how the track feels at speed."*
+> *"속도 부스트 수집 아이템은 여러 번 조정을 거쳤습니다. 첫 번째 버전은 너무 강했어요 — 앞으로 튀어나가서 다음 장애물에 반응하기도 전에 박혔습니다. 0.5초간 1.3x 버스트로 줄였더니, 통제력을 잃지 않으면서도 그 찔림을 느낄 수 있게 됐어요. 레벨 3까지 등장 지연도 도움이 됐습니다 — 등장할 시점쯤이면 플레이어가 이미 고속 트랙의 감각을 익혀 있거든요."*
 
-> *"Hit slowdown was the last big balancing pass. Before it existed, getting hit at level 6 or 7 was basically a death sentence — you'd respawn at full speed into another obstacle. Dropping the ball to 40% speed on hit and ramping it back up gives you a window to recover and reposition. The ramp-up duration scales with level — 2 seconds early on, up to 4.5 at Nightmare — so the safety net grows with the difficulty."*
+> *"피격 감속은 마지막 큰 밸런싱 패치였습니다. 존재하지 않던 시절에는 레벨 6이나 7에서 맞는 게 사실상 사형 선고였어요 — 풀 속도로 리스폰해서 바로 다음 장애물에 박혔습니다. 피격 시 속도를 40%로 떨어뜨리고 점진적으로 회복시키니 회복하고 위치를 재정비할 시간이 생깁니다. 회복 시간은 레벨에 따라 달라져요 — 초반에는 2초, 악몽에서는 4.5초까지 — 난이도가 올라갈수록 안전망도 커집니다."*
 
-> *"The obstacles needed to read instantly at speed. A plain colored box doesn't scream 'danger' when it's flying toward you at 2x. Putting a brick texture on the static walls and a bold white X on the sliding blocks made them unmistakable — you see the X and your brain says 'avoid' before you even think about it."*
+> *"장애물은 고속에서 즉시 읽혀야 합니다. 평범한 색깔 박스는 2배 속도로 날아오면 '위험'으로 안 읽혀요. 정적 벽에 벽돌 텍스처를, 슬라이딩 블록에는 굵은 흰색 X를 박았더니 한 눈에 들어옵니다 — X를 보면 머리가 생각하기도 전에 '피해야지'라고 반응합니다."*
 
-> *"The hoops used to be flat pink rings floating in the air. They looked like decorations, not rewards. Replacing them with neon yellow arches planted on the track made the 100-point pickup feel like a real gateway — something you aim for and drive through, not something you accidentally clip."*
+> *"원래 후프는 공중에 떠 있는 평평한 분홍색 링이었어요. 장식처럼 보였지 보상으로 안 읽혔습니다. 트랙 위에 박힌 네온 노란색 아치로 교체하니 100점 픽업이 진짜 관문처럼 느껴졌어요 — 우연히 스치는 게 아니라 노려서 운전해 통과하는 것."*
 
-> *"Mobile performance was stuttering near arches and at game start. Two culprits: every arch was spawning a dynamic PointLight, and the GPU was compiling shaders on the first frame they appeared. Killing the PointLights in favor of emissive materials fixed the arch stutter outright. We also added a shader warm-up pass during init — one off-screen render of every material — which turned out to be a story for a later entry."*
+> *"아치와 게임 시작 근처에서 모바일 성능이 버벅였습니다. 두 원인이 있었어요 — 모든 아치가 동적 PointLight를 만들고 있었고, GPU가 첫 등장 프레임에 셰이더를 컴파일하고 있었던 거죠. PointLight를 발광 머티리얼로 교체하니 아치 스터터가 완전히 사라졌어요. 추가로 초기화 중 셰이더 워밍업 패스를 추가했습니다 — 모든 머티리얼을 한 번 오프스크린 렌더하는 거죠 — 이건 나중 항목의 이야기가 됐습니다."*
 
-> *"The stutter when you got hit took four separate fixes, and the biggest one was hiding inside the warm-up pass we'd been trusting for months. It parked its meshes off-screen at y = -100, which is exactly where Three.js frustum-culls them — and a culled mesh never reaches the GPU, so not one shader was ever actually compiling. The ghost marble is a transparent material, and transparent is a different shader program from solid, so the driver was compiling it at the precise moment you took damage. Disabling frustum culling on those meshes was a one-line change that finally did the job the pass was written to do."*
+> *"피격 시 스터터를 고치는 데 네 번의 별도 픽스가 필요했고, 그중 가장 큰 게 우리가 수개월간 믿어왔던 워밍업 패스 안에 숨어 있었습니다. 메시를 y = -100에 오프스크린으로 주차했는데, 그게 정확히 Three.js가 프러스텀 컬링하는 위치라서 — 컬링된 메시는 GPU에 도달하지 않고, 따라서 한 번도 셰이더가 컴파일되지 않았어요. 고스트 마블은 투명 머티리얼인데, 투명은 솔리드와 다른 셰이더 프로그램이라 드라이버가 정확히 피격 순간에 컴파일하고 있었던 거죠. 해당 메시의 프러스텀 컬링을 비활성화하니 패스가 작성된 의도대로 동작하기 시작했습니다."*
 
-> *"The other three stacked onto that same frame. Retiring a track segment was disposing the shared material every other segment still used, which threw away its compiled program and forced a recompile on the next one — and segments retire constantly. The red damage flash was building a full-screen div from scratch on every hit, forcing a layout and a fresh compositor layer at the worst possible instant; it lives in the DOM permanently now and just toggles a class. And the forward velocity was snapping to 40% in a single frame. It eases down over 0.18 seconds now and recovers on a smoothstep — same 40% floor, same per-level durations, no jolt. Ghost mode fades in and back out instead of popping, so the material swap happens while the marble is already solid and you never catch it."*
+> *"같은 프레임에 세 가지 버그가 더 쌓여 있었습니다. 트랙 세그먼트를 은퇴시킬 때 다른 세그먼트들이 아직 사용 중인 공유 머티리얼을 해제해서 컴파일된 프로그램이 날아가고 다음 세그먼트에서 재컴파일이 강제됨 — 세그먼트는 계속 은퇴하니까요. 빨간 데미지 플래시는 매 피격마다 풀스크린 div를 처음부터 만들어서 최악의 순간에 레이아웃과 새 컴포지터 레이어를 강제했어요; 이제는 DOM에 영구 살고 클래스만 토글합니다. 그리고 전방 속도가 한 프레임에 40%로 스냅됐어요. 이제 0.18초에 걸쳐 부드럽게 내려가고 smoothstep으로 회복됩니다 — 같은 40% 바닥, 같은 레벨별 지속 시간, 충격 없음. 고스트 모드는 팝업 대신 페이드 인/아웃하니, 마블이 여전히 단단할 때 머티리얼 스위치가 일어나서 절대 보이지 않습니다."*
 
-> *"Ramps had been sitting in track.js since the first prototype — a full builder, a type picker, angled physics bodies, arrow decals — and generateSegment never called any of it. Not once. It was dead weight that every future change to the track had to read past and route around. Deleting it took the file from 251 lines to 132."*
+> *"램프는 첫 프로토타입 이후로 track.js에 계속 앉아 있었습니다 — 풀 빌더, 타입 선택기, 각진 물리 바디, 화살표 데칼까지 — 하지만 generateSegment는 단 한 번도 호출한 적이 없었어요. 미래의 모든 트랙 변경이 읽고 우회해야 했던 죽은 코드였습니다. 삭제하니 파일이 251줄에서 132줄로 줄었습니다."*
 
-> *"Reaching a new level deserved a moment. Five shooting stars now streak across the sky as the banner appears — pink, cyan, gold, violet, mint — shuffled every time so no two celebrations look alike, each on its own heading: across, back, up from the corner, down from the top. The first pass had four of the five flying down through the track and the hex floor, which read as falling debris instead of sky. They're pinned to a band of open sky now that scales with distance, so the lowest any streak reaches is about seven degrees above the horizon — everything the player actually drives on sits below that line."*
+> *"새 레벨 도달은 한 순간을 받을 자격이 있었어요. 이제 배너가 나타날 때 다섯 개의 별똥별이 하늘을 가로질러 휙휙 지나갑니다 — 핑크, 청록, 골드, 바이올렛, 민트 — 매번 섞여서 두 번 똑같은 축하가 없고, 각자 고유한 방향으로: 가로, 되돌이, 모서리에서 위로, 위에서 아래로. 첫 패스에서는 다섯 개 중 네 개가 트랙과 헥스 바닥을 통과해 아래로 떨어지고 있었는데, 하늘이 아니라 떨어지는 잔해처럼 읽혔어요. 지금은 거리에 따라 스케일되는 열린 하늘 띠에 고정되어, 가장 낮은 별똥별도 수평선 위 약 7도까지밖에 내려오지 않습니다 — 플레이어가 실제로 운전하는 모든 것은 그 라인 아래에 있어요."*
 
-> *"The celebration moved to level 2 and up — level 1 is where you start, not something you reach. Eight streaks now instead of five: the original five sweeping the upper sky, plus three that climb out of the corners just above the floor line, each with its own speed so some knife across while others drift. Every level celebrates in its own colours — aqua at 2, ember at 3, orchid at 4, crimson at 5, deep blue at 6, and white-hot pink and cyan at Nightmare."*
+> *"축하는 레벨 2부터로 옮겼습니다 — 레벨 1은 시작이지 도달한 곳이 아니니까요. 이제 다섯 개 대신 여덟 개: 원래 다섯 개는 상층 하늘을 쓸고, 추가로 바닥선 바로 위 모서리에서 솟아오르는 세 개가 있어요 — 각자 다른 속도로 어떤 건 칼같이 가로지르고 어떤 건 천천히 흘러갑니다. 모든 레벨은 고유한 색으로 축하해요 — 레벨 2는 아쿠아, 3은 엠버, 4는 오키드, 5는 크림슨, 6은 딥블루, 악몽은 백열 핑크와 청록."*
 
-> *"Three separate bugs were hiding in the night sky, and each one masked the next. The twinkle never worked at all: the code wrote a per-star size attribute every third frame, but PointsMaterial only reads its own uniform and ignores per-vertex size entirely — pure cost, no effect. With that fixed, only one bright star showed up, because the stars sat 181 to 260 units out against a far plane of 200, so three quarters of the field was being clipped and never drawn. And once they were all inside the frustum, the middle of the sky still looked empty — scattering uniformly over a sphere buries about 73% of the stars near the zenith, above the top of the frame. The camera pitches down roughly 13 degrees with a 65 degree field of view, so the only sky you ever see runs from the horizon to about 20 degrees up. Placing stars by elevation angle into that band took the count in frame from 16 to 78."*
+> *"밤하늘에 세 개의 별개 버그가 숨어 있었고, 각자가 다음 것을 가리고 있었어요. 반짝임은 애초에 전혀 작동하지 않았습니다 — 코드는 매 세 번째 프레임마다 별별 사이즈 어트리뷰트를 썼는데, PointsMaterial은 자기 유니폼만 읽고 정점별 사이즈는 완전히 무시해요 — 순수한 비용, 효과 없음. 고치자마자 밝은 별 하나만 나타났어요 — 별들이 181에서 260 유닛 거리에 앉아 있었는데 원거리가 200이니까 별의 3/4가 클리핑돼서 절대 그려지지 않았거든요. 그리고 프러스텀 안에 모두 들어오자, 하늘 한가운데가 여전히 비어 보였어요 — 구에 균일하게 흩뿌리면 별의 약 73%가 천정 근처, 프레임 상단 위에 묻혀버립니다. 카메라는 약 13도 아래로 기울고 65도 시야각이라, 보이는 하늘은 수평선에서 위로 약 20도까지뿐이에요. 고도 각도별로 그 띠에 별을 배치하니 화면 안 별 수가 16개에서 78개로 뛰었습니다."*
 
-> *"The gradient dome had been dead the entire time. Radius 250 against a far plane of 200 puts every vertex past the clip distance, so it hadn't drawn a single pixel since the far plane was tightened. Pulling it back into range revealed why nobody had missed it — a coloured wash along the bottom of the sky that fought the nebulae for attention. It's gone now, geometry and shader both. The backdrop is a flat night and the ribbons carry the sky, which is what the game had effectively been shipping all along."*
+> *"그라디언트 돔은 한 번도 살아있지 않았어요. 반지름 250이 원거리 200에 대비해 모든 정점이 클립 거리 너머라 픽셀 하나도 그리지 못했어요. 범위 안으로 가져오자 아무도 그리워하지 않은 이유가 드러났어요 — 하늘 아래쪽을 따라 색이 번지는 게 네뷸라와 주목을 놓고 싸우더라고요. 지오메트리도 셰이더도 다 삭제했습니다. 배경은 평평한 밤이고 리본이 하늘을 짊어집니다 — 이게 사실 게임이 처음부터 보내오던 거였어요."*
 
-> *"Stars are sorted into three tiers now to lean into realism: a handful of bright ones that swell and throb behind a halo with a colour cast, a middle layer that twinkles gently, and a dense dim scatter that only shimmers and recedes. All of it runs off a single time uniform in the vertex shader, so the CPU does nothing per frame. The nebulae shift palette on every level-up, blending over about three seconds from wherever they happen to be, so gaining a level mid-transition never snaps."*
+> *"별은 이제 현실감을 위해 세 단계로 나뉩니다 — 헤일로 뒤에서 부풀고 떨리는 몇 개의 밝은 별, 부드럽게 반짝이는 중간층, 그리고 깜빡이고 물러나는 조용한 산개층. 전부 정점 셰이더의 단일 시간 유니폼으로 돌아가서 CPU는 프레임당 아무것도 안 합니다. 네뷸라는 매 레벨업마다 팔레트를 바꾸고, 어디서든 약 3초에 걸쳐 블렌딩돼서 진행 중인 전환 중간에 레벨을 얻어도 스냅이 안 됩니다."*
 
-> *"The obstacles read as flat red shapes at speed. The brick texture doubled to 512x256, and every brick now gets a lit top-left edge, a shadowed bottom-right, and a hard dark outline, so the courses stay legible when a wall is flying at you at 2.4x. The white X picked up a dark backing stroke — against the brighter brick faces it had started to wash out. The structures lost parts, too. The swinging arm's centre post and the low bar's two vertical posts are gone: the posts sat exactly on the rails and read as stems punched through them, and a static stem in the middle of a moving obstacle made it genuinely hard to tell which part was the hazard. The low bars stop at the rails' inner face now instead of running to the centre-line, which is what that shape was always meant to look like."*
+> *"장애물은 고속에서 평평한 빨간 도형으로 읽혔어요. 벽돌 텍스처가 512x256으로 두 배가 됐고, 모든 벽돌이 좌상단 밝은 가장자리, 우하단 그림자, 단단한 어두운 외곽선을 받아서 2.4x로 날아오는 벽도 코스가 읽혀요. 흰색 X도 어두운 배경 획을 얻었어요 — 더 밝은 벽돌 면 앞에서 색이 빠지더라고요. 구조물도 부품을 잃었습니다. 회전 암의 중앙 기둥과 낮은 바의 두 수직 기둥은 사라졌어요 — 기둥이 정확히 레일 위에 앉아서 레일을 뚫고 박힌 줄기로 읽혔고, 움직이는 장애물 한가운데 정적 줄이 있으면 어느 부분이 위험인지 알기 어려웠어요. 낮은 바는 이제 중심선이 아니라 레일 안쪽 면까지만 이어집니다 — 그 모양이 항상 의도했던 모양이에요."*
 
-> *"There is no bloom pass in this renderer, so emissive alone can never spill light past a surface. The first attempt at an aura was a fresnel shell, and a fresnel shell peaks at its own silhouette and then cuts off hard — that reads as a band around the object, not a glow. What worked was a camera-facing quad, larger than the obstacle and parked at the obstacle's mid-depth so the obstacle's own front face occludes the middle. Brightness is driven by distance outside the obstacle's rectangle: full where it meets the surface, decaying smoothly outward. Only the surrounding falloff is ever visible, and it inherits every transform for free because it's parented to the obstacle."*
+> *"이 렌더러에는 블룸 패스가 없으니, 발광만으로 표면을 넘어 빛을 넘길 수 없습니다. 오라의 첫 시도는 프레넬 셸이었는데, 프레넬 셸은 자기 실루엣에서 피크를 치고 그 뒤로 단단히 잘라내요 — 객체 둘레의 띠로 읽히고 빛으로 안 읽혀요. 작동한 건 카메라를 향한 쿼드 — 장애물보다 크고 장애물의 중간 깊이에 주차해서 장애물의 앞면이 가운데를 가리는 식이에요. 밝기는 장애물의 사각형 바깥 거리로 구동돼요 — 표면 만나는 지점에서 가득, 바깥으로 부드럽게 감쇠. 보이는 건 항상 주변 감쇠뿐이고, 장애물에 부모로 묶여 있어서 모든 변환을 공짜로 따라옵니다."*
 
-> *"Then a distant obstacle started showing up as a glowing outline with nothing inside it, and the whole thing kept shifting as you approached. Scene fog was the culprit, in the least obvious way possible: Three.js applies fog automatically to its own materials, but a raw ShaderMaterial gets none unless you write it in yourself. At 150 units out the brick face was down to 24% of its own colour while the aura still burned at a full 100% — so all you saw was glow. The aura carries fog now, using the same math Three uses internally, with one deliberate difference: it fades toward zero rather than toward the fog colour, because additive blending would otherwise add blue light to the scene instead of dimming the glow. On top of that sits an intentional ramp — the aura holds at 45% out at the horizon and eases up to full strength by 25 units, so an obstacle first appears as a soft distant light and resolves into its real colours as it comes into range."*
-
----
-
-### 🛠 Built With
-
-* **Three.js** — 3D rendering
-* **Cannon-es** — Physics engine
-* **Vanilla JavaScript** — No frameworks
-* **HTML/CSS** — HUD overlay
-* **GitHub Pages** — Hosting
+> *"그러다 먼 거리의 장애물이 안에 아무것도 없는 빛나는 윤곽선으로 나타나기 시작했고, 다가갈수록 계속 바뀌었어요. 신 포그가 가장 미묘한 방식으로 원인이었어요 — Three.js는 자기 머티리얼에 자동으로 포그를 적용하지만, 원시 ShaderMaterial은 직접 작성하지 않으면 아무것도 받지 못합니다. 150유닛 거리에서 벽돌 면이 자기 색의 24%까지 떨어졌는데 오라는 여전히 100%로 타고 있었어요 — 그래서 빛만 보였습니다. 오라는 이제 Three가 내부적으로 쓰는 것과 같은 수학으로 포그를 적용하는데, 한 가지 의도된 차이가 있어요: 일반적인 안개 색이 아니라 0으로 페이드해요 — 가산 블렌딩이 안개 색을 광선으로 더하지 않고 빛을 흐리게 해야 하니까요. 그 위에 의도된 램프가 있어요 — 오라는 수평선에서 45% 강도를 유지하고 25유닛 거리에서 완전 강도까지 부드럽게 올라가서, 장애물이 처음에는 부드러운 먼 빛으로 나타나고 범위 안으로 들어오면 진짜 색으로 해소됩니다."*
 
 ---
 
-[**➡️ PLAY THE GAME HERE**](https://danielchavez-w.github.io/Swerve-Mobile-Game/)
+## 🛠 사용 기술
+
+* **Three.js** — 3D 렌더링
+* **Cannon-es** — 물리 엔진
+* **Vanilla JavaScript** — 프레임워크 없음
+* **HTML/CSS** — HUD 오버레이
+* **GitHub Pages** — 호스팅
+
+---
+
+## 🌍 원본 및 한글화
+
+이 저장소는 [danielchavez-w/Swerve-Mobile-Game](https://github.com/danielchavez-w/Swerve-Mobile-Game)의 한글화 포크입니다. 원본의 모든 기능, 물리, 렌더링 로직은 그대로 유지되었으며, UI 텍스트와 난이도 이름만 한국어로 번역되었습니다.
+
+---
+
+[**➡️ 게임 플레이하기**](https://sigco3111.github.io/Swerve-Mobile-Game/)

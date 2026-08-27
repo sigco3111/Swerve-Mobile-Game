@@ -12,7 +12,7 @@ export function initAudio() {
         masterGain.connect(audioCtx.destination);
         initialized = true;
     } catch (e) {
-        console.warn('Web Audio API not available');
+        console.warn('Web Audio API를 사용할 수 없습니다');
     }
 }
 
