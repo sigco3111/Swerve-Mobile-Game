@@ -11,6 +11,16 @@ const boostGeo = (() => {
     geo.rotateX(-Math.PI / 2); // Point forward (-Z)
     return geo;
 })();
+// Power-up geometry. Each shape is recognisable at speed: torus (magnet ring),
+// octahedron (shield crystal), and a smaller cone for slow-mo to read as a
+// "shrunk" version of the boost cone.
+const magnetGeo = new THREE.TorusGeometry(0.32, 0.08, 8, 20);
+const shieldGeo = new THREE.OctahedronGeometry(0.38, 0);
+const slowMoGeo = (() => {
+    const geo = new THREE.ConeGeometry(0.28, 0.55, 6);
+    geo.rotateX(-Math.PI / 2);
+    return geo;
+})();
 
 // Shared materials
 const dotMaterial = new THREE.MeshStandardMaterial({
@@ -45,11 +55,38 @@ const boostMaterial = new THREE.MeshStandardMaterial({
     metalness: 0.5
 });
 
+const magnetMaterial = new THREE.MeshStandardMaterial({
+    color: 0xff00aa,
+    emissive: 0xff00aa,
+    emissiveIntensity: 1.0,
+    roughness: 0.2,
+    metalness: 0.45
+});
+
+const shieldMaterial = new THREE.MeshStandardMaterial({
+    color: 0x00ddff,
+    emissive: 0x00ddff,
+    emissiveIntensity: 1.0,
+    roughness: 0.15,
+    metalness: 0.55
+});
+
+const slowMoMaterial = new THREE.MeshStandardMaterial({
+    color: 0x7766ff,
+    emissive: 0x6644ff,
+    emissiveIntensity: 0.95,
+    roughness: 0.2,
+    metalness: 0.45
+});
+
 export const COLLECTIBLE_TYPES = {
     DOT: 'dot',
     DIAMOND: 'diamond',
     HOOP: 'hoop',
-    BOOST: 'boost'
+    BOOST: 'boost',
+    MAGNET: 'magnet',
+    SHIELD: 'shield',
+    SLOW_MO: 'slow_mo'
 };
 
 function createDot(scene, x, y, z) {
@@ -114,6 +151,54 @@ function createBoost(scene, x, y, z) {
         collected: false,
         collectTime: 0,
         points: 25
+    };
+}
+
+function createMagnet(scene, x, y, z) {
+    const mesh = new THREE.Mesh(magnetGeo, magnetMaterial);
+    mesh.position.set(x, y + 0.7, z);
+    scene.add(mesh);
+
+    return {
+        type: COLLECTIBLE_TYPES.MAGNET,
+        mesh,
+        zPos: z,
+        baseY: y,
+        collected: false,
+        collectTime: 0,
+        points: 0   // Powerup — no direct score, the pulls do the work
+    };
+}
+
+function createShield(scene, x, y, z) {
+    const mesh = new THREE.Mesh(shieldGeo, shieldMaterial);
+    mesh.position.set(x, y + 0.7, z);
+    scene.add(mesh);
+
+    return {
+        type: COLLECTIBLE_TYPES.SHIELD,
+        mesh,
+        zPos: z,
+        baseY: y,
+        collected: false,
+        collectTime: 0,
+        points: 0
+    };
+}
+
+function createSlowMo(scene, x, y, z) {
+    const mesh = new THREE.Mesh(slowMoGeo, slowMoMaterial);
+    mesh.position.set(x, y + 0.6, z);
+    scene.add(mesh);
+
+    return {
+        type: COLLECTIBLE_TYPES.SLOW_MO,
+        mesh,
+        zPos: z,
+        baseY: y,
+        collected: false,
+        collectTime: 0,
+        points: 0
     };
 }
 
@@ -239,6 +324,30 @@ export function spawnCollectiblesForSegment(scene, segmentZ, trackWidth, difficu
         spawned.push(c);
     }
 
+    // Magnet — pulls score items for 3s. Introduced at level 2.
+    if (difficultyLevel >= 2 && Math.random() < density * 0.15) {
+        const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : clampX((Math.random() - 0.5) * 3);
+        const c = createMagnet(scene, safeX, y, segmentZ);
+        collectibles.push(c);
+        spawned.push(c);
+    }
+
+    // Shield — blocks the next hit. Rarest; level 3+.
+    if (difficultyLevel >= 3 && Math.random() < density * 0.1) {
+        const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : clampX((Math.random() - 0.5) * 3);
+        const c = createShield(scene, safeX, y, segmentZ);
+        collectibles.push(c);
+        spawned.push(c);
+    }
+
+    // Slow-mo — halves forward speed for 1.5s. Level 4+ (when speeds bite).
+    if (difficultyLevel >= 4 && Math.random() < density * 0.15) {
+        const safeX = obstacle ? getSafeLane(obstacle, trackWidth) : clampX((Math.random() - 0.5) * 3);
+        const c = createSlowMo(scene, safeX, y, segmentZ);
+        collectibles.push(c);
+        spawned.push(c);
+    }
+
     return spawned;
 }
 
@@ -258,12 +367,19 @@ function getCollectibleDensity(level) {
 export function updateCollectibles(time, marblePos, marbleRadius, canCollect = true) {
     let pointsEarned = 0;
     let boostCollected = false;
+    let magnetCollected = false;
+    let shieldCollected = false;
+    let slowMoCollected = false;
+    let itemsCollected = 0;
+    let bestPoints = 0;
     const now = performance.now();
 
     // Squared pickup radii — comparing squares avoids a sqrt per item per frame
     const dotR2 = (marbleRadius + 0.4) ** 2;
     const diamondR2 = (marbleRadius + 0.5) ** 2;
     const boostR2 = (marbleRadius + 0.45) ** 2;
+    // Power-ups use a single forgiving radius since precise collision doesn't matter
+    const powerupR2 = (marbleRadius + 0.45) ** 2;
     const hoopDz = marbleRadius + 0.5;
     // Anything further than this in Z can't be reachable this frame
     const NEAR_Z = 4;
@@ -294,6 +410,18 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         } else if (c.type === COLLECTIBLE_TYPES.BOOST) {
             c.mesh.rotation.y = time * 3;
             c.mesh.position.y = c.baseY + 0.6 + Math.sin(time * 2.5 + c.zPos) * 0.15;
+        } else if (c.type === COLLECTIBLE_TYPES.MAGNET) {
+            // Spinning torus — reads as a rotating field
+            c.mesh.rotation.x = time * 1.5;
+            c.mesh.rotation.y = time * 2.2;
+            c.mesh.position.y = c.baseY + 0.7 + Math.sin(time * 2 + c.zPos) * 0.12;
+        } else if (c.type === COLLECTIBLE_TYPES.SHIELD) {
+            c.mesh.rotation.y = time * 1.8;
+            c.mesh.rotation.x = Math.sin(time * 1.2) * 0.4;
+            c.mesh.position.y = c.baseY + 0.7 + Math.sin(time * 1.7 + c.zPos) * 0.1;
+        } else if (c.type === COLLECTIBLE_TYPES.SLOW_MO) {
+            c.mesh.rotation.y = time * 2.5;
+            c.mesh.position.y = c.baseY + 0.6 + Math.sin(time * 2.2 + c.zPos) * 0.12;
         }
 
         // Skip collection during ghost mode
@@ -311,6 +439,8 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
             if (Math.abs(dz) < hoopDz && Math.abs(dx) < c.innerRadius) {
                 collectItem(c);
                 pointsEarned += c.points;
+                itemsCollected++;
+                if (c.points > bestPoints) bestPoints = c.points;
             }
             continue;
         }
@@ -321,17 +451,70 @@ export function updateCollectibles(time, marblePos, marbleRadius, canCollect = t
         if (c.type === COLLECTIBLE_TYPES.DOT && distSq < dotR2) {
             collectItem(c);
             pointsEarned += c.points;
+            itemsCollected++;
+            if (c.points > bestPoints) bestPoints = c.points;
         } else if (c.type === COLLECTIBLE_TYPES.DIAMOND && distSq < diamondR2) {
             collectItem(c);
             pointsEarned += c.points;
+            itemsCollected++;
+            if (c.points > bestPoints) bestPoints = c.points;
         } else if (c.type === COLLECTIBLE_TYPES.BOOST && distSq < boostR2) {
             collectItem(c);
             pointsEarned += c.points;
+            itemsCollected++;
+            if (c.points > bestPoints) bestPoints = c.points;
             boostCollected = true;
+        } else if ((c.type === COLLECTIBLE_TYPES.MAGNET ||
+                    c.type === COLLECTIBLE_TYPES.SHIELD ||
+                    c.type === COLLECTIBLE_TYPES.SLOW_MO) && distSq < powerupR2) {
+            collectItem(c);
+            itemsCollected++;
+            if (c.type === COLLECTIBLE_TYPES.MAGNET) magnetCollected = true;
+            else if (c.type === COLLECTIBLE_TYPES.SHIELD) shieldCollected = true;
+            else slowMoCollected = true;
         }
     }
 
-    return { points: pointsEarned, boost: boostCollected };
+    return {
+        points: pointsEarned,
+        boost: boostCollected,
+        magnet: magnetCollected,
+        shield: shieldCollected,
+        slowMo: slowMoCollected,
+        count: itemsCollected,
+        bestPoints
+    };
+}
+
+// Magnet pull — sweep every uncollected, score-only collectible inside `radius`
+// and slide it toward the marble at `pullSpeed` m/s. Score items = DOT/DIAMOND/
+// HOOP. Power-ups stay where they are: another MAGNET on the field shouldn't
+// vacuum into the first one, and stacking SLOW_MOs would just be noise.
+export function pullCollectibles(marblePos, radius, pullSpeed, dt) {
+    const r2 = radius * radius;
+    const maxStep = pullSpeed * dt;
+    for (const c of collectibles) {
+        if (c.collected) continue;
+        if (c.type !== COLLECTIBLE_TYPES.DOT &&
+            c.type !== COLLECTIBLE_TYPES.DIAMOND &&
+            c.type !== COLLECTIBLE_TYPES.HOOP) continue;
+
+        const p = c.mesh.position;
+        const dx = marblePos.x - p.x;
+        const dy = marblePos.y - p.y;
+        const dz = marblePos.z - p.z;
+        const distSq = dx * dx + dy * dy + dz * dz;
+        if (distSq > r2 || distSq < 1e-4) continue;
+
+        const dist = Math.sqrt(distSq);
+        // Cap the step so a collectible right next to the marble can't teleport
+        // past it in a single frame.
+        const step = Math.min(maxStep, dist);
+        const k = step / dist;
+        p.x += dx * k;
+        p.y += dy * k;
+        p.z += dz * k;
+    }
 }
 
 function collectItem(c) {
@@ -360,5 +543,8 @@ export function resetCollectibles(scene) {
 }
 
 export function getCollectibleMaterials() {
-    return [dotMaterial, diamondMaterial, hoopMaterial, boostMaterial];
+    return [
+        dotMaterial, diamondMaterial, hoopMaterial, boostMaterial,
+        magnetMaterial, shieldMaterial, slowMoMaterial
+    ];
 }

@@ -27,12 +27,45 @@
                         transform="rotate(-90 18 18)"/>
                 </svg>
             </div>
+            <div id="powerup-bar">
+                <div class="powerup-slot hidden" id="slot-magnet" data-kind="magnet">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+                        <circle class="ring-fg" cx="18" cy="18" r="16" fill="none" stroke="#ff00aa" stroke-width="2"
+                            stroke-dasharray="100.53" stroke-dashoffset="0" stroke-linecap="round"
+                            transform="rotate(-90 18 18)"/>
+                    </svg>
+                    <span class="powerup-letter">M</span>
+                </div>
+                <div class="powerup-slot hidden" id="slot-slowmo" data-kind="slow_mo">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+                        <circle class="ring-fg" cx="18" cy="18" r="16" fill="none" stroke="#7766ff" stroke-width="2"
+                            stroke-dasharray="100.53" stroke-dashoffset="0" stroke-linecap="round"
+                            transform="rotate(-90 18 18)"/>
+                    </svg>
+                    <span class="powerup-letter" style="color:#7766ff">T</span>
+                </div>
+                <div class="powerup-slot hidden" id="slot-shield" data-kind="shield">
+                    <svg viewBox="0 0 36 36">
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="#00ddff" stroke-width="2" stroke-opacity="0.4"/>
+                        <circle cx="18" cy="18" r="16" fill="none" stroke="#00ddff" stroke-width="2"
+                            stroke-dasharray="100.53" stroke-dashoffset="0" stroke-linecap="round"
+                            transform="rotate(-90 18 18)"/>
+                    </svg>
+                    <span class="powerup-letter" style="color:#00ddff">S</span>
+                </div>
+            </div>
         </div>
         <div id="hud-center">
             <div id="score-display">0</div>
+            <div id="combo-display" class="hidden">
+                <span id="combo-count">0</span><span id="combo-mult">×1</span>
+            </div>
         </div>
         <div id="hud-right">
             <div id="highscore-display">최고: 0</div>
+            <button id="pause-btn" class="hidden" type="button">||</button>
         </div>
     </div>
 
@@ -54,6 +87,7 @@
         <div id="final-score-label">점수</div>
         <div id="final-score">0</div>
         <div id="final-highscore">최고: 0</div>
+        <div id="achievements-summary">업적 0/6</div>
         <div id="restart-btn">터치하여 다시 시작</div>
     </div>
 
@@ -65,8 +99,37 @@
         </div>
     </div>
 
+    <!-- Pause Overlay -->
+    <div id="pause-overlay" class="hidden">
+        <h2 id="pause-title">일시정지</h2>
+        <div id="settings-panel">
+            <div class="setting-row">
+                <span class="setting-label">사운드</span>
+                <button class="toggle on" data-setting="sound" type="button" aria-pressed="true"></button>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">진동</span>
+                <button class="toggle on" data-setting="haptic" type="button" aria-pressed="true"></button>
+            </div>
+            <div class="setting-row">
+                <span class="setting-label">색약 모드</span>
+                <button class="toggle" data-setting="colorblind" type="button" aria-pressed="false"></button>
+            </div>
+        </div>
+        <div id="resume-btn">터치하여 재개</div>
+    </div>
+
     <!-- Damage flash — kept in the DOM and toggled, never rebuilt -->
     <div id="hit-flash"></div>
+
+    <!-- Achievement toast — slides in from the right, holds, slides out -->
+    <div id="achievement-toast">
+        <span id="achievement-toast-icon">★</span>
+        <div id="achievement-toast-body">
+            <div id="achievement-toast-title">업적 해제</div>
+            <div id="achievement-toast-name"></div>
+        </div>
+    </div>
 
     <!-- Canvas container -->
     <div id="game-container"></div>

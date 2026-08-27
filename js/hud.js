@@ -3,6 +3,11 @@ let levelUpEl, levelUpTextEl;
 let titleScreen, titleHighscore, tapToStart;
 let gameOverScreen, finalScore, finalHighscore, restartBtn;
 let gameContainer, hitFlashEl;
+let comboEl, comboCountEl, comboMultEl;
+let powerupSlots = {};   // kind -> { slot, ringFg, lastOffset }
+let achievementToast, achievementToastName, achievementsSummaryEl;
+let pauseBtn, pauseOverlay;
+let toastHideTimer = null;
 
 // Cached state so the per-frame HUD calls stay no-ops when nothing changed
 let scorePulseTimer = null;
@@ -32,6 +37,22 @@ export function initHUD() {
     restartBtn = document.getElementById('restart-btn');
     gameContainer = document.getElementById('game-container');
     hitFlashEl = document.getElementById('hit-flash');
+    comboEl = document.getElementById('combo-display');
+    comboCountEl = document.getElementById('combo-count');
+    comboMultEl = document.getElementById('combo-mult');
+
+    for (const kind of ['magnet', 'slowmo', 'shield']) {
+        const slot = document.getElementById(`slot-${kind}`);
+        const ringFg = slot ? slot.querySelector('.ring-fg') : null;
+        powerupSlots[kind] = { slot, ringFg, lastOffset: -1 };
+    }
+
+    achievementToast = document.getElementById('achievement-toast');
+    achievementToastName = document.getElementById('achievement-toast-name');
+    achievementsSummaryEl = document.getElementById('achievements-summary');
+
+    pauseBtn = document.getElementById('pause-btn');
+    pauseOverlay = document.getElementById('pause-overlay');
 }
 
 export function updateScore(score) {
@@ -155,3 +176,137 @@ export function hitFlash() {
 
 export function getRestartButton() { return gameOverScreen; }
 export function getTitleScreen() { return titleScreen; }
+
+// Combo — count + multiplier tier. Tier drives both the colour and the pulse.
+export function updateCombo(count, mult, tier) {
+    if (comboEl.classList.contains('hidden')) {
+        comboEl.classList.remove('hidden');
+    }
+    comboCountEl.textContent = count;
+    comboMultEl.textContent = `×${mult}`;
+    const tierStr = tier > 0 ? String(tier) : '1';
+    if (comboEl.dataset.tier !== tierStr) {
+        comboEl.dataset.tier = tierStr;
+        // Restart the pulse by toggling the animation off/on
+        comboEl.style.animation = 'none';
+        void comboEl.offsetWidth;
+        comboEl.style.animation = '';
+    }
+}
+
+export function hideCombo() {
+    if (comboEl.classList.contains('hidden')) return;
+    comboEl.classList.add('hidden');
+    delete comboEl.dataset.tier;
+}
+
+// Power-ups: active=true reveals the slot, active=false hides it. Ringed
+// kinds (magnet, slow_mo) get a countdown arc; shield has no duration and
+// shows a full ring as long as it's held.
+const RING_CIRCUMFERENCE = 100.53;
+export function updatePowerup(kind, active, timeRemaining, totalDuration) {
+    const entry = powerupSlots[kind];
+    if (!entry || !entry.slot) return;
+    if (!active) {
+        if (!entry.slot.classList.contains('hidden')) {
+            entry.slot.classList.add('hidden');
+        }
+        entry.lastOffset = -1;
+        return;
+    }
+    entry.slot.classList.remove('hidden');
+
+    // Shield has no timeRemaining — the ring stays full as a binary "have" indicator.
+    if (entry.ringFg) {
+        let offset;
+        if (timeRemaining === undefined || !totalDuration) {
+            offset = 0;
+        } else {
+            offset = RING_CIRCUMFERENCE * (1 - timeRemaining / totalDuration);
+        }
+        if (Math.abs(offset - entry.lastOffset) >= 0.6) {
+            entry.lastOffset = offset;
+            entry.ringFg.style.strokeDashoffset = offset;
+        }
+    }
+}
+
+// Achievement toast — slide in, hold, slide out. Multiple calls just refresh
+// the title; the most recent achievement wins so the user always sees what
+// they just earned instead of the one they unlocked seconds earlier.
+export function showAchievementToast(name) {
+    if (!achievementToast) return;
+    achievementToastName.textContent = name;
+    achievementToast.classList.add('show');
+    if (toastHideTimer) clearTimeout(toastHideTimer);
+    toastHideTimer = setTimeout(() => {
+        achievementToast.classList.remove('show');
+        toastHideTimer = null;
+    }, 3000);
+}
+
+export function hideAchievementToast() {
+    if (!achievementToast) return;
+    achievementToast.classList.remove('show');
+    if (toastHideTimer) {
+        clearTimeout(toastHideTimer);
+        toastHideTimer = null;
+    }
+}
+
+export function updateAchievementsSummary(unlocked, total) {
+    if (achievementsSummaryEl) {
+        achievementsSummaryEl.textContent = `업적 ${unlocked}/${total}`;
+    }
+}
+
+// Pause button — visible only during gameplay. The handler is bound by the
+// caller; we just expose the element so main.js can attach the listener.
+export function showPauseButton() {
+    if (pauseBtn && pauseBtn.classList.contains('hidden')) {
+        pauseBtn.classList.remove('hidden');
+    }
+}
+
+export function hidePauseButton() {
+    if (pauseBtn && !pauseBtn.classList.contains('hidden')) {
+        pauseBtn.classList.add('hidden');
+    }
+}
+
+export function showPauseOverlay() {
+    if (pauseOverlay) pauseOverlay.classList.remove('hidden');
+}
+
+export function hidePauseOverlay() {
+    if (pauseOverlay) pauseOverlay.classList.add('hidden');
+}
+
+export function getPauseButton() { return pauseBtn; }
+export function getPauseOverlay() { return pauseOverlay; }
+
+// Settings — sync the toggle visuals to the saved state, then attach a
+// change handler. Returns the toggle elements so main.js can wire the
+// runtime effect (master gain, haptic gate, colorblind filter class).
+const toggleEls = {};
+export function initSettingsToggles(initialValues) {
+    const toggles = pauseOverlay ? pauseOverlay.querySelectorAll('.toggle') : [];
+    toggles.forEach((btn) => {
+        const key = btn.dataset.setting;
+        toggleEls[key] = btn;
+        const on = !!initialValues[key];
+        btn.classList.toggle('on', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    return toggleEls;
+}
+
+export function getSettingToggle(key) {
+    return toggleEls[key];
+}
+
+export function applyColorblind(on) {
+    if (gameContainer) {
+        gameContainer.classList.toggle('colorblind', on);
+    }
+}

@@ -1,24 +1,27 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { initScene, getScene, getCamera, getRenderer, warmUpGPU } from './scene.js';
+import { initScene, getScene, getCamera, getRenderer, warmUpGPU, pulseEffect, updateEffect, renderFrame } from './scene.js';
 import { initPhysics, stepPhysics, getWorld, GROUPS } from './physics.js';
 import { createMarble, updateMarble, getMarbleMesh, getMarbleBody, getMarbleRadius, enterGhostMode, endGhostMode, isGhostMode, getGhostTimer, getGhostDuration, respawnMarble, getPlayerMaterials } from './player.js';
-import { initControls, updateControls } from './controls.js';
+import { initControls, updateControls, isMarbleAirborne, releaseControls } from './controls.js';
 import { initTrack, generateSegment, removeOldSegments, getSegments, getSegmentLength, getLastSegmentZ, resetTrack, getCurrentTrackY, getTrackMaterials } from './track.js';
 import { initRails, updateRails, getRailMaterials } from './rails.js';
 import { spawnObstacle, updateObstacles, removeOldObstacles, resetObstacles, getObstacleMaterials } from './obstacles.js';
-import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles, getCollectibleMaterials } from './collectibles.js';
-import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen } from './hud.js';
+import { spawnCollectiblesForSegment, updateCollectibles, removeOldCollectibles, resetCollectibles, getCollectibleMaterials, pullCollectibles } from './collectibles.js';
+import { initHUD, updateScore, updateHighScore, updateLives, showGhostIndicator, hideGhostIndicator, showLevelUp, showHUD, hideHUD, showTitleScreen, hideTitleScreen, showGameOver, hideGameOver, screenShake, hitFlash, getRestartButton, getTitleScreen, updateCombo, hideCombo, updatePowerup, showAchievementToast, hideAchievementToast, updateAchievementsSummary, showPauseButton, hidePauseButton, showPauseOverlay, hidePauseOverlay, getPauseButton, getPauseOverlay, initSettingsToggles, getSettingToggle, applyColorblind } from './hud.js';
 import { getDifficultyForScore, checkLevelUp, getSpeedMultiplier, getCurrentLevel, resetDifficulty } from './difficulty.js';
 import { createSkybox, updateSkybox, setSkyLevel } from './skybox.js';
 import { createHexBackground, updateHexBackground, getHexMaterial } from './hexbg.js';
 import { createShootingStars, updateShootingStars, triggerShootingStars, resetShootingStars, getShootingStarMaterials } from './shootingstars.js';
-import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound } from './audio.js';
+import { initAudio, resumeAudio, playCollectSound, playDiamondSound, playHoopSound, playHitSound, playGameOverSound, playLevelUpSound, playBoostSound, playComboTierSound, playMagnetSound, playShieldSound, playSlowMoSound, setSoundEnabled } from './audio.js';
+import { loadAchievements, checkAchievements, getUnlockedCount, getTotalCount } from './achievements.js';
+import { loadSettings, getSetting, setSetting, getAllSettings, haptic } from './settings.js';
 
 // Game states
 const STATES = {
     MENU: 'MENU',
     PLAYING: 'PLAYING',
+    PAUSED: 'PAUSED',
     GAME_OVER: 'GAME_OVER'
 };
 
@@ -37,6 +40,78 @@ let boostActive = false;
 let boostTimer = 0;
 const BOOST_DURATION = 0.5;
 const BOOST_SPEED_MULT = 1.3;
+
+// Combo state — pickups within COMBO_WINDOW seconds stack a point multiplier.
+// Tier thresholds are inclusive; tier=0 means no combo display (count < 2).
+let comboCount = 0;
+let comboTimer = 0;
+let comboTier = 0;
+const COMBO_WINDOW = 1.5;
+const COMBO_TIERS = [
+    { count: 3, mult: 2 },
+    { count: 5, mult: 3 },
+    { count: 8, mult: 5 }
+];
+
+// Power-up state. Magnet and slow-mo are timed; shield is binary.
+let magnetActive = false;
+let magnetTimer = 0;
+const MAGNET_DURATION = 3.0;
+const MAGNET_RADIUS = 5.0;
+const MAGNET_PULL_SPEED = 14;
+let shieldActive = false;
+let slowMoActive = false;
+let slowMoTimer = 0;
+const SLOW_MO_DURATION = 1.5;
+const SLOW_MO_MULT = 0.5;
+
+function resetPowerups() {
+    magnetActive = false;
+    magnetTimer = 0;
+    shieldActive = false;
+    slowMoActive = false;
+    slowMoTimer = 0;
+    updatePowerup('magnet', false);
+    updatePowerup('slowmo', false);
+    updatePowerup('shield', false);
+}
+
+// Difficulty-speed lerp. The level table still gives a step target, but we
+// ease the actual rendered speed across SPEED_MULT_LERP_DURATION instead of
+// snapping. smoothstep keeps the start and end slopes zero so the camera and
+// HUD don't read the change as a hitch.
+let currentSpeedMult = 1;
+let speedMultLerpFrom = 1;
+let speedMultLerpTo = 1;
+let speedMultLerpT = 1;
+const SPEED_MULT_LERP_DURATION = 1.5;
+
+// Per-run stats — reset every startGame, snapshotted on every event that
+// could unlock an achievement. The check is cheap (six ID-keyed comparisons)
+// so we run it inline rather than batching.
+let runStats = {
+    maxScore: 0,
+    maxComboTier: 0,
+    magnetCount: 0,
+    shieldBlocks: 0,
+    maxLevel: 0
+};
+
+function evaluateAchievements() {
+    runStats.maxScore = Math.max(runStats.maxScore, score);
+    runStats.maxComboTier = Math.max(runStats.maxComboTier, comboTier);
+    runStats.maxLevel = Math.max(runStats.maxLevel, getCurrentLevel());
+    const unlocked = checkAchievements(runStats);
+    for (const a of unlocked) showAchievementToast(a.name);
+}
+
+function resetRunStats() {
+    runStats.maxScore = 0;
+    runStats.maxComboTier = 0;
+    runStats.magnetCount = 0;
+    runStats.shieldBlocks = 0;
+    runStats.maxLevel = 0;
+}
 
 // Hit slowdown state — longer recovery at higher levels to balance fast base speeds
 let hitSlowActive = false;
@@ -65,6 +140,26 @@ function smoothstep01(p) {
     return p * p * (3 - 2 * p);
 }
 
+// Combo lookup — highest tier whose threshold the current count has crossed.
+function getComboTier(count) {
+    let mult = 1;
+    let tier = 0;
+    for (const t of COMBO_TIERS) {
+        if (count >= t.count) {
+            mult = t.mult;
+            tier = t.mult;
+        }
+    }
+    return { mult, tier };
+}
+
+function resetCombo() {
+    comboCount = 0;
+    comboTimer = 0;
+    comboTier = 0;
+    hideCombo();
+}
+
 // Camera follow parameters
 const cameraOffset = new THREE.Vector3(0, 5, 8);
 const cameraLookAhead = new THREE.Vector3(0, 0, -12);
@@ -83,6 +178,8 @@ let trackPhysMaterial;
 
 function init() {
     highScore = parseInt(localStorage.getItem('swerve_highScore') || '0', 10);
+    loadAchievements();
+    loadSettings();
 
     const container = document.getElementById('game-container');
     const { scene, camera, renderer } = initScene(container);
@@ -102,8 +199,42 @@ function init() {
     initRails(scene);
 
     initHUD();
+    initSettingsToggles(getAllSettings());
+    applyColorblind(getSetting('colorblind'));
+
+    // Settings toggles — touchstart only with preventDefault so a tap doesn't
+    // fire both touchstart and the synthetic click (which would double-toggle).
+    // stopPropagation keeps the overlay from also resuming the game.
+    for (const key of ['sound', 'haptic', 'colorblind']) {
+        const btn = getSettingToggle(key);
+        if (!btn) continue;
+        const handler = (e) => {
+            e.stopPropagation();
+            const newValue = !getSetting(key);
+            setSetting(key, newValue);
+            btn.classList.toggle('on', newValue);
+            btn.setAttribute('aria-pressed', newValue ? 'true' : 'false');
+            if (key === 'sound') setSoundEnabled(newValue);
+            else if (key === 'colorblind') applyColorblind(newValue);
+        };
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            handler(e);
+        });
+        btn.addEventListener('click', (e) => {
+            // Some browsers fire click without a preceding touchstart; guard
+            // against double-fire with a short suppression window.
+            if (btn._suppressClick) return;
+            handler(e);
+        });
+        btn.addEventListener('touchend', () => {
+            btn._suppressClick = true;
+            setTimeout(() => { btn._suppressClick = false; }, 400);
+        });
+    }
 
     initAudio();
+    setSoundEnabled(getSetting('sound'));
 
     // Pre-compile every shader program up front. Anything that first appears
     // mid-game — the ghost marble, the level-up streaks — has to be in here, or
@@ -137,9 +268,45 @@ function init() {
         if (gameState === STATES.GAME_OVER) startGame();
     });
 
+    // Pause button → pause. Overlay tap → resume. Both routes go through
+    // pauseGame/resumeGame so the state transitions stay in one place.
+    getPauseButton().addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (gameState === STATES.PLAYING) pauseGame();
+    });
+    getPauseButton().addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (gameState === STATES.PLAYING) pauseGame();
+    });
+    const resumeFromOverlay = () => {
+        if (gameState === STATES.PAUSED) resumeGame();
+    };
+    getPauseOverlay().addEventListener('click', resumeFromOverlay);
+    getPauseOverlay().addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        resumeFromOverlay();
+    });
+
     marbleBody.addEventListener('collide', onMarbleCollide);
 
     requestAnimationFrame(gameLoop);
+}
+
+function pauseGame() {
+    if (gameState !== STATES.PLAYING) return;
+    gameState = STATES.PAUSED;
+    releaseControls();
+    showPauseOverlay();
+}
+
+function resumeGame() {
+    if (gameState !== STATES.PAUSED) return;
+    hidePauseOverlay();
+    // Reset lastTime so the next dt doesn't cover the entire pause and jolt
+    // the physics solver on the first frame back.
+    lastTime = performance.now();
+    gameState = STATES.PLAYING;
 }
 
 function startGame() {
@@ -165,6 +332,13 @@ function startGame() {
     hitSlowTimer = 0;
     speedPenalty = 1;
     hitSlowFrom = 1;
+    currentSpeedMult = 1;
+    speedMultLerpFrom = 1;
+    speedMultLerpTo = 1;
+    speedMultLerpT = SPEED_MULT_LERP_DURATION;  // already settled
+    resetCombo();
+    resetPowerups();
+    resetRunStats();
 
     // Generate initial track first, so we know the Y
     for (let i = 0; i < SEGMENTS_AHEAD; i++) {
@@ -226,6 +400,8 @@ function startGame() {
     hideTitleScreen();
     hideGameOver();
     showHUD();
+    showPauseButton();
+    hidePauseOverlay();
     showLevelUp(1);
     lastTime = performance.now();
     gameState = STATES.PLAYING;
@@ -249,11 +425,28 @@ function onMarbleCollide(event) {
 function takeDamage() {
     if (isGhostMode()) return;
 
+    // Shield absorbs the hit outright — no life lost, no ghost, no slowdown.
+    // Just a brief flash + effect pulse so the player knows what saved them.
+    if (shieldActive) {
+        shieldActive = false;
+        updatePowerup('shield', false);
+        runStats.shieldBlocks++;
+        playShieldSound();
+        pulseEffect(0.5);
+        hitFlash();
+        haptic(20);
+        evaluateAchievements();
+        return;
+    }
+
     lives--;
     updateLives(lives);
     playHitSound();
     screenShake();
     hitFlash();
+    pulseEffect(0.7);
+    haptic([30, 25, 70]);
+    resetCombo();
 
     if (lives <= 0) {
         gameOver();
@@ -270,14 +463,22 @@ function takeDamage() {
 function gameOver() {
     gameState = STATES.GAME_OVER;
     playGameOverSound();
+    haptic(120);
 
     if (score > highScore) {
         highScore = score;
         localStorage.setItem('swerve_highScore', highScore.toString());
     }
 
+    // Final snapshot — score may have crossed an achievement threshold on
+    // the very last pickup before death.
+    evaluateAchievements();
+    updateAchievementsSummary(getUnlockedCount(), getTotalCount());
+
     hideHUD();
     hideGhostIndicator();
+    hidePauseButton();
+    hidePauseOverlay();
     showGameOver(score, highScore);
 }
 
@@ -288,19 +489,22 @@ function gameLoop(timestamp) {
     const time = timestamp / 1000;
     lastTime = timestamp;
 
-    if (gameState === STATES.PLAYING) {
-        gameTime += dt;
-        updatePlaying(dt, time);
-    }
-
-    const renderer = getRenderer();
     const scene = getScene();
     const camera = getCamera();
 
-    updateSkybox(time, camera.position);
-    updateHexBackground(time, camera.position);
-    updateShootingStars(time, camera.position);
-    renderer.render(scene, camera);
+    // Everything that ticks lives inside this guard — sky, hex, shooting
+    // stars, post-effect decay. The render call stays outside so a paused
+    // frame still draws the last state.
+    if (gameState === STATES.PLAYING) {
+        gameTime += dt;
+        updatePlaying(dt, time);
+        updateSkybox(time, camera.position);
+        updateHexBackground(time, camera.position);
+        updateShootingStars(time, camera.position);
+        updateEffect(dt);
+    }
+
+    renderFrame();
 }
 
 function updatePlaying(dt, time) {
@@ -310,8 +514,26 @@ function updatePlaying(dt, time) {
     const marbleMesh = getMarbleMesh();
     const camera = getCamera();
 
-    // Constant speed — only changes on level-up
-    const speedMult = getSpeedMultiplier(score);
+    // Reusable position vector — refreshed once per frame so magnet pull and
+    // pickup tests both see the same point without re-reading marbleBody twice.
+    _marblePosVec.copy(marbleBody.position);
+
+    // Constant speed — only changes on level-up, then eased in over
+    // SPEED_MULT_LERP_DURATION so the jump from 1.0× to 1.15× doesn't snap.
+    const targetSpeedMult = getSpeedMultiplier(score);
+    if (targetSpeedMult !== speedMultLerpTo) {
+        speedMultLerpFrom = currentSpeedMult;
+        speedMultLerpTo = targetSpeedMult;
+        speedMultLerpT = 0;
+    }
+    if (speedMultLerpT < SPEED_MULT_LERP_DURATION) {
+        speedMultLerpT += dt;
+        const p = Math.min(speedMultLerpT / SPEED_MULT_LERP_DURATION, 1);
+        currentSpeedMult = speedMultLerpFrom +
+            (speedMultLerpTo - speedMultLerpFrom) * smoothstep01(p);
+    } else {
+        currentSpeedMult = speedMultLerpTo;
+    }
 
     // Boost timer countdown
     if (boostActive) {
@@ -341,7 +563,32 @@ function updatePlaying(dt, time) {
         }
     }
 
-    const forwardSpeed = BASE_FORWARD_SPEED * speedMult * (boostActive ? BOOST_SPEED_MULT : 1) * speedPenalty;
+    // Power-up timers — magnet and slow-mo expire on their own.
+    if (magnetActive) {
+        magnetTimer -= dt;
+        if (magnetTimer <= 0) {
+            magnetActive = false;
+            updatePowerup('magnet', false);
+        }
+    }
+    if (slowMoActive) {
+        slowMoTimer -= dt;
+        if (slowMoTimer <= 0) {
+            slowMoActive = false;
+            updatePowerup('slowmo', false);
+        }
+    }
+
+    // Magnet pulls score-only collectibles toward the marble each frame.
+    // Score items get pulled into the marble's pickup radius naturally.
+    if (magnetActive) {
+        pullCollectibles(_marblePosVec, MAGNET_RADIUS, MAGNET_PULL_SPEED, dt);
+    }
+
+    const forwardSpeed = BASE_FORWARD_SPEED * currentSpeedMult *
+        (boostActive ? BOOST_SPEED_MULT : 1) *
+        speedPenalty *
+        (slowMoActive ? SLOW_MO_MULT : 1);
 
     // Set forward velocity directly for constant, predictable speed
     marbleBody.velocity.z = forwardSpeed;
@@ -362,13 +609,15 @@ function updatePlaying(dt, time) {
         if (marbleBody.velocity.x < 0) marbleBody.velocity.x = 0;
     }
 
-    // Ball must stay on the ground — dampen upward velocity.
-    // Use a threshold so the contact solver can do its micro-adjustments
-    // without creating an oscillation loop (which causes track jitter at low speeds).
-    if (marbleBody.velocity.y > 0.3) {
-        marbleBody.velocity.y = 0;
-    } else if (marbleBody.velocity.y > 0) {
-        marbleBody.velocity.y *= 0.5;
+    // Ball must stay on the ground — dampen upward velocity so the solver can
+    // settle without an oscillation loop. Skip while airborne: the jump gives
+    // upward velocity on purpose, and killing it would silently disable jump.
+    if (!isMarbleAirborne()) {
+        if (marbleBody.velocity.y > 0.3) {
+            marbleBody.velocity.y = 0;
+        } else if (marbleBody.velocity.y > 0) {
+            marbleBody.velocity.y *= 0.5;
+        }
     }
 
     // Update marble visual
@@ -413,22 +662,67 @@ function updatePlaying(dt, time) {
     updateObstacles(time);
 
     // Update collectibles and check collections (skip during ghost mode)
-    _marblePosVec.copy(marbleBody.position);
     const collectResult = updateCollectibles(time, _marblePosVec, getMarbleRadius(), !isGhostMode());
 
     if (collectResult.boost) {
         boostActive = true;
         boostTimer = BOOST_DURATION;
         playBoostSound();
+        pulseEffect(0.4);
+        haptic(15);
     }
 
-    if (collectResult.points > 0) {
-        score += collectResult.points;
+    if (collectResult.magnet) {
+        magnetActive = true;
+        magnetTimer = MAGNET_DURATION;
+        runStats.magnetCount++;
+        playMagnetSound();
+        haptic(25);
+        updatePowerup('magnet', true, magnetTimer, MAGNET_DURATION);
+    } else if (magnetActive) {
+        // Ring ticks down even when no new pickup — keeps the HUD honest.
+        updatePowerup('magnet', true, magnetTimer, MAGNET_DURATION);
+    }
+
+    if (collectResult.shield) {
+        shieldActive = true;
+        playShieldSound();
+        haptic(15);
+        updatePowerup('shield', true);
+    }
+
+    if (collectResult.slowMo) {
+        slowMoActive = true;
+        slowMoTimer = SLOW_MO_DURATION;
+        playSlowMoSound();
+        haptic(20);
+        updatePowerup('slowmo', true, slowMoTimer, SLOW_MO_DURATION);
+    } else if (slowMoActive) {
+        updatePowerup('slowmo', true, slowMoTimer, SLOW_MO_DURATION);
+    }
+
+    if (collectResult.count > 0) {
+        // Combo — every pickup restarts the window and bumps the count.
+        // Multiplier is applied to the whole batch this frame so a single
+        // frame that catches 3 dots already scores at ×2 once you've built one.
+        const oldTier = comboTier;
+        comboCount += collectResult.count;
+        comboTimer = COMBO_WINDOW;
+        const { mult, tier } = getComboTier(comboCount);
+        comboTier = tier;
+        const earned = collectResult.points * mult;
+        score += earned;
         updateScore(score);
 
-        if (collectResult.points >= 100) playHoopSound();
-        else if (collectResult.points >= 50) playDiamondSound();
+        if (collectResult.bestPoints >= 100) playHoopSound();
+        else if (collectResult.bestPoints >= 50) playDiamondSound();
         else playCollectSound();
+
+        // Visible feedback only once the chain actually means something
+        if (comboCount >= 2) {
+            updateCombo(comboCount, mult, tier);
+            if (tier > oldTier) playComboTierSound(tier);
+        }
 
         const levelUp = checkLevelUp(score);
         if (levelUp) {
@@ -437,6 +731,7 @@ function updatePlaying(dt, time) {
             triggerShootingStars(time, levelUp.level);
             setSkyLevel(levelUp.level);
             playLevelUpSound();
+            haptic([10, 20, 10, 20, 50]);
         }
 
         if (score > highScore) {
@@ -444,6 +739,14 @@ function updatePlaying(dt, time) {
             updateHighScore(highScore);
             localStorage.setItem('swerve_highScore', highScore.toString());
         }
+
+        evaluateAchievements();
+    }
+
+    // Combo decay — silent reset; the HUD hides itself.
+    if (comboTimer > 0) {
+        comboTimer -= dt;
+        if (comboTimer <= 0) resetCombo();
     }
 
     // Ghost mode HUD

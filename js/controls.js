@@ -12,8 +12,13 @@ let touchId = null;
 let jumpRequested = false;
 let canJump = true;
 let lastGroundTime = 0;
-const JUMP_UP = 12;
-const JUMP_SPEED_BOOST = 3;        // Extra forward speed on jump
+// Airborne window — once a jump sets velocity.y, main.js needs to leave it alone
+// long enough for the marble to clear obstacles at chest height. The window is
+// soft (timeout-based) rather than flag-only so a side-bonk that misses the
+// ground-contact event still gets dampened eventually.
+let airborneUntil = 0;
+const JUMP_UP = 9.5;
+const AIRBORNE_WINDOW_MS = 2500;
 
 // Keyboard
 const keys = {};
@@ -56,6 +61,7 @@ export function initControls(_marbleMesh, _marbleBody, _camera, _renderer) {
         if (ev.body.collisionFilterGroup === 1 || ev.body.collisionFilterGroup === 16) {
             canJump = true;
             lastGroundTime = performance.now();
+            airborneUntil = 0;
         }
     });
 }
@@ -170,11 +176,12 @@ export function updateControls(dt) {
 
     // ── Jump ──
     if (jumpRequested && canJump) {
-        // Jump UP only — preserve current forward velocity, add a small boost
-        const currentVZ = marbleBody.velocity.z;
-        marbleBody.velocity.y = JUMP_UP;                    // Straight up
-        marbleBody.velocity.z = currentVZ - JUMP_SPEED_BOOST;  // Slight forward boost
+        // Pure vertical — main.js owns forward velocity, so any extra we add
+        // here would be overwritten next frame anyway. Opening the airborne
+        // window is what tells main.js to stop killing upward velocity.
+        marbleBody.velocity.y = JUMP_UP;
         canJump = false;
+        airborneUntil = performance.now() + AIRBORNE_WINDOW_MS;
     }
     jumpRequested = false;
 
@@ -185,3 +192,16 @@ export function updateControls(dt) {
 }
 
 export function isDraggingMarble() { return isTouching; }
+export function isMarbleAirborne() { return performance.now() < airborneUntil; }
+
+// Pause hook — drop any in-flight touch so a finger left on the screen when
+// the game pauses doesn't teleport the marble on resume. Velocity reset
+// avoids the marble drifting on its own inertia while paused.
+export function releaseControls() {
+    isTouching = false;
+    touchId = null;
+    if (marbleBody) {
+        marbleBody.velocity.x = 0;
+        marbleBody.velocity.y = 0;
+    }
+}
